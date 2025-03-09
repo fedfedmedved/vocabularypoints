@@ -5,13 +5,11 @@ public class UI {
     private VocabularyList list;
 
     public UI() {
-        scanner = new Scanner(System.in);
-        list = new VocabularyList();
-        // do I really need to surround it with a try-with block???
+        this(new VocabularyList());
     }
 
     public UI(VocabularyList list) {
-        scanner = new Scanner(System.in);
+        scanner = new Scanner(System.in); // do I really need to surround it with a try-with block???
         this.list = list;
     }
 
@@ -39,23 +37,32 @@ public class UI {
 
     public void addWord() {
         System.out.println("Insert word");
-        String word = scanner.nextLine().strip().toLowerCase();
-        if (!Regex.match(Regex.WORD, word)) {
+        String input = scanner.nextLine().strip(); //ngrams are case-sensitive by default
+        if (!Word.match(Word.REGEX, input)) {
             System.out.println("Not a word!");
             return;
         }
-        //show definition
-//        System.out.println("Were you able to explain the word correctly?");
-//        String input = scanner.nextLine();
-        //if "no" return;
-        System.out.println("Submit Google books value");
-        double ngram = Double.parseDouble(scanner.nextLine()); //will have to automate this to take ngram as input
-        list.add(word, ngram);
+        Word word = new Word(input); /*
+        this is not UI's responsibility
+        but it is too much work to rewrite VocabList atm */
+        Unigram unigram = word.getNgram();
+        unigram.extractValueFromJson(unigram.requestJson());
+        System.out.println(word.getNgram().getFrequency());
+        word.computeScore();
+
+        /*
+        show definition
+                System.out.println("Were you able to explain the word correctly?");
+                String input = scanner.nextLine();
+        if "no" return;
+        */
+
+        list.add(input, word.getScore()); //this should become a pair String (unigram), Word.
     }
 
     public void deleteWord() {
         System.out.println("Insert word");
-        String word = scanner.nextLine().strip().toLowerCase();
+        String word = scanner.nextLine().strip();
         list.delete(word);
     }
 }
