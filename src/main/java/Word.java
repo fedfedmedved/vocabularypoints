@@ -7,32 +7,42 @@ public class Word {
     // class for providing verification and filtering as well as merging
     // as well as dealing with alternate spellings and proper names.
     // rudimentary for now. Rename class to "Dictionary" later?
-    public static final String REGEX = "([\\w&&[^_]]+)" //Group 1: non-hyphenated unigrams
-            + "([\\-[\\w&&[^_]]+]*)"; //Group 2: hyphenated part(s)
-    private String definition;
+    public static final String UNIGRAM =  "([\\w&&[^_]]+)"        //Group 1: non-hyphenated unigrams
+                                        + "([\\-[\\w&&[^_]]+]*)"; //Group 2: hyphenated part(s)
+//    private String definition; to be implemented later
     private int score;
-    private Unigram unigram;
-    private ArrayList<Unigram> altSpellings;
-    private final LocalDate dateAdded; //the idea is to use frequencies from different years when the data becomes available.
+    private final Ngram ngram;
+    private ArrayList<String> altSpellings; //TBI later
+    private final LocalDate dateAdded;
 
     public Word(String unigram) {
         this.dateAdded = LocalDate.now();
-        this.unigram = new Unigram(unigram); //subtracting 1 to make things simpler for now
+        this.ngram = new Ngram(unigram, this);
     }
 
-    public void computeScore() {
+    public String getNgramSearch() {
         if (altSpellings == null) {
-            if (unigram.getFrequency() == 0) return; //that means there had been an error
-            this.score = (int) max(0,round(-100 * atan(log10(unigram.getFrequency()) + 4.9)));  //the cutoff value for "common words". Values between 4.8 and 4.95 seem reasonable.
-//            System.out.println(this.score);
-            if (this.score == 0) System.out.println("You won't get points for common words. Try harder next time!");
-//            list.put(word.toLowerCase().strip(), score);
-            System.out.println("You get " + score+" points for "+ unigram);
+            return ngram+"_INF";
+        } else {
+            return ngram +"+"+ altSpellings.stream()
+                    .reduce((a,b) -> a+"+"+b)
+                    .get();
         }
     }
 
-    public Unigram getNgram() {
-        return unigram;
+    public void computeScore(double frequency) {
+            if (frequency == 0) { //I should probably throw an exception here or before
+                System.out.println(" Cannot compute score: failed to fetch frequency!");
+                return;
+            }
+
+            this.score = (int) max(0,round(-100 * atan(log10(ngram.getFrequency()) + 4.9)));  //the cutoff value for "common words". Values between 4.8 and 4.95 seem reasonable.
+            if (this.score == 0) System.out.println("You won't get points for common words. Try harder next time!");
+            System.out.println("You earned " + score+" points for "+ ngram);
+    }
+
+    public Ngram getNgram() {
+        return ngram;
     }
 
     public int getScore() {
@@ -45,4 +55,8 @@ public class Word {
         return matcher.matches();
     }
 
+    @Override
+    public String toString() {
+        return ngram + ": " + score + " points" + ", added on " + dateAdded;
+    }
 }

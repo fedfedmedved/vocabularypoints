@@ -5,21 +5,29 @@ import java.net.http.HttpResponse;
 import org.json.JSONArray; //added maven dependency - didn't work :(
 import org.json.JSONObject;
 
-public class Unigram {
-    private String unigram;
-    private String url;
+public class Ngram {
+    private String ngram;
+    private Word word; //word associated with the unigram, treated as an injective mapping for now.
     private double frequency; //fraction of all n-grams (for same n, where n is the # words in a phrase) in the Google books English language corpus
-    private boolean caseSensitive = true; //can use it in link builder as a parameter
+//    private boolean caseSensitive = true; //can use it in link builder as a parameter
 //    boolean word; //is there a non-name word associated with the sequence of symbols?;
 //    boolean abbreviation; //fairly complex, don't know if i want to include that
-    //json
 
-    public Unigram(String unigram) {
-        this.unigram = unigram;
-        this.url = urlBuilder();
+    public Ngram(String ngram, Word word) {
+        this.ngram = ngram;
+        this.word = word;
+    }
+
+    public void fetchFrequency(String url) {
+        extractValueFromJson(requestJson());
+        System.out.println(frequency);
     }
 
     public String requestJson() {
+        return requestJson(urlBuilder());
+    }
+
+    public String requestJson(String url) {
         try (HttpClient client = HttpClient.newHttpClient()) {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
@@ -48,19 +56,24 @@ public class Unigram {
     }
 
     public String urlBuilder() {
+        return urlBuilder(word.getNgramSearch()); //default
+    }
+
+    public String urlBuilder(String ngram) {
         return new StringBuilder()
                 .append("https://books.google.com/ngrams/json?content=")
-                .append(unigram)
-                .append("_INF&year_start=2019") //start year
+                .append(ngram)
+                //.append("_INF") //inflection search
+                .append("&year_start=2019") //start year
                 .append("&year_end=2022")
 //                .append(year) //end year should be last full year?
                 .append("&corpus=en&smoothing=3") //are these params relevant for the json?
-//                .append("&case_insensitive=false") //default, optional
+//                .append("&case_insensitive=false") //default, optional, can't be used with _INF
                 .toString();
     }
 
     @Override
     public String toString() {
-        return this.unigram;
+        return this.ngram;
     }
 }

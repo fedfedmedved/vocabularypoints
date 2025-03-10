@@ -38,18 +38,11 @@ public class UI {
     public void addWord() {
         System.out.println("Insert word");
         String input = scanner.nextLine().strip(); //ngrams are case-sensitive by default
-        if (!Word.match(Word.REGEX, input)) {
+        if (!Word.match(Word.UNIGRAM, input)) { //will add support for phrases later
             System.out.println("Not a word!");
             return;
         }
-        Word word = new Word(input); /*
-        this is not UI's responsibility
-        but it is too much work to rewrite VocabList atm */
-        Unigram unigram = word.getNgram();
-        unigram.extractValueFromJson(unigram.requestJson());
-        System.out.println(word.getNgram().getFrequency());
-        word.computeScore();
-
+        Word word = new Word(input); //delegate this to Vocab list!!
         /*
         show definition
                 System.out.println("Were you able to explain the word correctly?");
