@@ -1,12 +1,8 @@
 import java.util.Scanner;
 
 public class UI {
-    private Scanner scanner;
-    private VocabularyList list;
-
-    public UI() {
-        this(new VocabularyList());
-    }
+    private final Scanner scanner;
+    private final VocabularyList list;
 
     public UI(VocabularyList list) {
         scanner = new Scanner(System.in); // do I really need to surround it with a try-with block???
@@ -42,15 +38,20 @@ public class UI {
             System.out.println("Not a word!");
             return;
         }
-        Word word = new Word(input); //delegate this to Vocab list!!
+        Word word = new Word(input);
         /*
         show definition
                 System.out.println("Were you able to explain the word correctly?");
                 String input = scanner.nextLine();
         if "no" return;
         */
-
-        list.add(input, word.getScore()); //this should become a pair String (unigram), Word.
+        int score = word.computeScore();
+        if (score == 0) {
+            System.out.println("You won't get points for common words. Try harder next time!");
+            return;
+        }
+        System.out.println("You earned " + score+" points for "+ input);
+        list.add(word);
     }
 
     public void deleteWord() {

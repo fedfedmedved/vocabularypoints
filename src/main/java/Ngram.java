@@ -6,8 +6,8 @@ import org.json.JSONArray; //added maven dependency - didn't work :(
 import org.json.JSONObject;
 
 public class Ngram {
-    private String ngram;
-    private Word word; //word associated with the unigram, treated as an injective mapping for now.
+    private final String ngram;
+    private final Word word; //word associated with the unigram, treated as an injective mapping for now.
     private double frequency; //fraction of all n-grams (for same n, where n is the # words in a phrase) in the Google books English language corpus
 //    private boolean caseSensitive = true; //can use it in link builder as a parameter
 //    boolean word; //is there a non-name word associated with the sequence of symbols?;
@@ -18,13 +18,30 @@ public class Ngram {
         this.word = word;
     }
 
-    public void fetchFrequency(String url) {
-        extractValueFromJson(requestJson());
-        System.out.println(frequency);
+    public Ngram(String ngram, double frequency) {
+        this.ngram = ngram;
+        this.frequency = frequency;
+        this.word = new Word(this);
     }
 
-    public String requestJson() {
-        return requestJson(urlBuilder());
+    public double fetchFrequency() {
+        extractValueFromJson(requestJson(urlBuilder()));
+        System.out.println(frequency);
+        return frequency;
+    }
+
+    public String urlBuilder() {
+        return urlBuilder(word.getNgramSearch()); //default
+    }
+
+    public String urlBuilder(String search) {
+        return "https://books.google.com/ngrams/json?content=" +
+                search +
+                "&year_start=2019" + //start year
+                "&year_end=2022" +
+                "&corpus=en&smoothing=3" //defaults; I don't think they are important for the single frequency
+//              "&case_insensitive=false" //default; optional; can't be combined with _INF
+                ;
     }
 
     public String requestJson(String url) {
@@ -55,21 +72,8 @@ public class Ngram {
         return this.frequency;
     }
 
-    public String urlBuilder() {
-        return urlBuilder(word.getNgramSearch()); //default
-    }
-
-    public String urlBuilder(String ngram) {
-        return new StringBuilder()
-                .append("https://books.google.com/ngrams/json?content=")
-                .append(ngram)
-                //.append("_INF") //inflection search
-                .append("&year_start=2019") //start year
-                .append("&year_end=2022")
-//                .append(year) //end year should be last full year?
-                .append("&corpus=en&smoothing=3") //are these params relevant for the json?
-//                .append("&case_insensitive=false") //default, optional, can't be used with _INF
-                .toString();
+    public Word getWord() {
+        return word;
     }
 
     @Override

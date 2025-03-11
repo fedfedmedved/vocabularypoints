@@ -3,13 +3,12 @@ import java.util.ArrayList;
 import java.time.LocalDate;
 import static java.lang.Math.*;
 
-public class Word {
+public class Word implements Comparable<Word> {
     // class for providing verification and filtering as well as merging
     // as well as dealing with alternate spellings and proper names.
     // rudimentary for now. Rename class to "Dictionary" later?
-    public static final String UNIGRAM =  "([\\w&&[^_]]+)"        //Group 1: non-hyphenated unigrams
-                                        + "([\\-[\\w&&[^_]]+]*)"; //Group 2: hyphenated part(s)
-//    private String definition; to be implemented later
+    public static final String UNIGRAM =  "[\\w&&[^_\\d]]+"; //matching non-hyphenated unigrams
+    //    private String definition; to be implemented later
     private int score;
     private final Ngram ngram;
     private ArrayList<String> altSpellings; //TBI later
@@ -18,11 +17,17 @@ public class Word {
     public Word(String unigram) {
         this.dateAdded = LocalDate.now();
         this.ngram = new Ngram(unigram, this);
+        computeScore(); //it is definitely going to get more complicated than this
+    }
+
+    public Word(Ngram ngram) {
+        this.dateAdded = LocalDate.now(); //this is wrong :(
+        this.ngram = ngram;
     }
 
     public String getNgramSearch() {
         if (altSpellings == null) {
-            return ngram+"_INF";
+            return ngram+"_INF"; //inflection search; will be annoying for phrases
         } else {
             return ngram +"+"+ altSpellings.stream()
                     .reduce((a,b) -> a+"+"+b)
@@ -30,15 +35,19 @@ public class Word {
         }
     }
 
-    public void computeScore(double frequency) {
-            if (frequency == 0) { //I should probably throw an exception here or before
-                System.out.println(" Cannot compute score: failed to fetch frequency!");
-                return;
-            }
+    public int computeScore() {
+        double frequency = ngram.getFrequency();
+        if (frequency == 0) {
+            frequency = ngram.fetchFrequency();
+        }
+        /* feels like I could write this better*/
+        if (frequency == 0) { //I should probably throw an exception here or before
+            System.out.println(" Cannot compute score: failed to fetch frequency!");
+            return -1;
+        }
 
-            this.score = (int) max(0,round(-100 * atan(log10(ngram.getFrequency()) + 4.9)));  //the cutoff value for "common words". Values between 4.8 and 4.95 seem reasonable.
-            if (this.score == 0) System.out.println("You won't get points for common words. Try harder next time!");
-            System.out.println("You earned " + score+" points for "+ ngram);
+        this.score = (int) max(0,round(-100 * atan(log10(ngram.getFrequency()) + 4.9)));  //the cutoff value for "common words". Values between 4.8 and 4.95 seem reasonable.
+        return this.score;
     }
 
     public Ngram getNgram() {
@@ -58,5 +67,10 @@ public class Word {
     @Override
     public String toString() {
         return ngram + ": " + score + " points" + ", added on " + dateAdded;
+    }
+
+    @Override
+    public int compareTo(Word other) {
+        return other.score - this.score; // I will probably replace this with several comparators to choose from.
     }
 }
